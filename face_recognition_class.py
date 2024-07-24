@@ -1,16 +1,16 @@
-import os
 import sys
 import cv2
 import numpy as np
 import face_recognition
+from database import recognize_students
 import math
 import time
 import tkinter as tk
 from tkinter import messagebox
 import threading
+import os  
 from register_person import register_person
 
-# Helper function to calculate face confidence
 def face_confidence(face_distance, face_match_threshold=0.6):
     range = (1.0 - face_match_threshold)
     linear_val = (1.0 - face_distance) / (range * 2.0)
@@ -33,8 +33,9 @@ class FaceRecognition:
         self.faces_dir = faces_dir
         self.video_source = video_source
         self.stop_recognition = False
+        self.recognized_students = []  
 
-        self.buttons = []  # Inicializa a lista de botões
+        self.buttons = [] 
 
         self.encode_faces()
 
@@ -101,6 +102,9 @@ class FaceRecognition:
                     if matches[best_match_index]:
                         name = self.known_face_names[best_match_index]
                         confidence = face_confidence(face_distances[best_match_index])
+                        
+                        if name not in self.recognized_students:
+                            self.recognized_students.append(name)
 
                     self.face_names.append(f'{name} ({confidence})')
 
@@ -125,6 +129,10 @@ class FaceRecognition:
         cv2.destroyWindow('Face Recognition')
         self.enable_buttons()
 
+        print("Recognized students:", self.recognized_students)
+
+        db_file = "recognition_log.db"
+        recognize_students(db_file, self.recognized_students)
     def show_timed_popup(self, title, message, duration=2000):
         def show():
             popup = tk.Toplevel(self.root)
@@ -166,7 +174,6 @@ class FaceRecognition:
         recognize_button.pack(side=tk.RIGHT, expand=True, padx=20, pady=20)
         self.buttons.append(recognize_button)
 
-        # Botão para Treinar o Modelo
         train_button = tk.Button(frame, text="Treinar Modelo", padx=10, pady=5, fg="white", bg="#263D42", font=("Helvetica", 12, "bold"), command=lambda: threading.Thread(target=self.encode_faces).start())
         train_button.pack(side=tk.BOTTOM, expand=True, padx=20, pady=20)
         self.buttons.append(train_button)
