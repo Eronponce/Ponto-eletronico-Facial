@@ -8,7 +8,8 @@ import time
 import tkinter as tk
 from tkinter import messagebox
 import threading
-from register_person import register_person 
+from register_person import register_person
+
 # Helper function to calculate face confidence
 def face_confidence(face_distance, face_match_threshold=0.6):
     range = (1.0 - face_match_threshold)
@@ -33,12 +34,21 @@ class FaceRecognition:
         self.video_source = video_source
         self.stop_recognition = False
 
+        self.buttons = []  # Inicializa a lista de botões
+
         self.encode_faces()
 
     def encode_faces(self):
+        self.disable_buttons()
+        self.show_timed_popup("Treinamento", "Treinando o modelo. Por favor, aguarde...")
         if not os.path.exists(self.faces_dir):
             print(f"Directory {self.faces_dir} does not exist.")
+            messagebox.showerror("Erro", f"Diretório {self.faces_dir} não existe.")
+            self.enable_buttons()
             return
+
+        self.known_face_encodings = []
+        self.known_face_names = []
 
         for person_name in os.listdir(self.faces_dir):
             person_dir = os.path.join(self.faces_dir, person_name)
@@ -57,8 +67,12 @@ class FaceRecognition:
                     print(f"Error processing image {image_path}: {str(e)}")
 
         print("Known faces:", self.known_face_names)
+        self.show_timed_popup("Treinamento", "Modelo treinado com sucesso!")
+        self.enable_buttons()
 
     def run_recognition(self):
+        self.disable_buttons()
+        self.show_timed_popup("Reconhecimento", "Iniciando o reconhecimento facial. Por favor, aguarde...")
         video_capture = cv2.VideoCapture(self.video_source)
         if not video_capture.isOpened():
             sys.exit('Video source not found...')
@@ -109,6 +123,24 @@ class FaceRecognition:
 
         video_capture.release()
         cv2.destroyWindow('Face Recognition')
+        self.enable_buttons()
+
+    def show_timed_popup(self, title, message, duration=2000):
+        def show():
+            popup = tk.Toplevel(self.root)
+            popup.title(title)
+            label = tk.Label(popup, text=message)
+            label.pack(padx=20, pady=20)
+            self.root.after(duration, popup.destroy)
+        self.root.after(0, show)
+
+    def disable_buttons(self):
+        for button in self.buttons:
+            button.config(state=tk.DISABLED)
+
+    def enable_buttons(self):
+        for button in self.buttons:
+            button.config(state=tk.NORMAL)
 
     def show_main_buttons(self):
         for widget in self.root.winfo_children():
@@ -124,8 +156,17 @@ class FaceRecognition:
         frame = tk.Frame(self.root, bg='white')
         frame.place(relwidth=1, relheight=1)
 
-        register_button = tk.Button(frame, text="Cadastrar Pessoa", padx=10, pady=5, fg="white", bg="#263D42", font=("Helvetica", 12, "bold"), command=lambda: register_person(self, self.root))
+        self.buttons = []
+
+        register_button = tk.Button(frame, text="Cadastrar Pessoa", padx=10, pady=5, fg="white", bg="#263D42", font=("Helvetica", 12, "bold"), command=lambda: register_person(self.root))
         register_button.pack(side=tk.LEFT, expand=True, padx=20, pady=20)
+        self.buttons.append(register_button)
 
         recognize_button = tk.Button(frame, text="Iniciar Reconhecimento", padx=10, pady=5, fg="white", bg="#263D42", font=("Helvetica", 12, "bold"), command=lambda: threading.Thread(target=self.run_recognition).start())
         recognize_button.pack(side=tk.RIGHT, expand=True, padx=20, pady=20)
+        self.buttons.append(recognize_button)
+
+        # Botão para Treinar o Modelo
+        train_button = tk.Button(frame, text="Treinar Modelo", padx=10, pady=5, fg="white", bg="#263D42", font=("Helvetica", 12, "bold"), command=lambda: threading.Thread(target=self.encode_faces).start())
+        train_button.pack(side=tk.BOTTOM, expand=True, padx=20, pady=20)
+        self.buttons.append(train_button)

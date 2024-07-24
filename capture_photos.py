@@ -26,6 +26,7 @@ def capture_photos(person_dir, root):
         cap.release()
         cv2.destroyAllWindows()
         top.destroy()
+        
         messagebox.showinfo("Info", "Fotos capturadas com sucesso!")
 
     top = tk.Toplevel(root)
