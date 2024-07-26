@@ -2,15 +2,16 @@ import sys
 import cv2
 import numpy as np
 import face_recognition
-from database import recognize_students
 import math
 import time
 import tkinter as tk
 from tkinter import messagebox
 import threading
-import os  
+import os  # Adicionado para resolver o erro
 from register_person import register_person
+from database import recognize_students  # Importa a função para conectar ao banco de dados
 
+# Helper function to calculate face confidence
 def face_confidence(face_distance, face_match_threshold=0.6):
     range = (1.0 - face_match_threshold)
     linear_val = (1.0 - face_distance) / (range * 2.0)
@@ -33,9 +34,9 @@ class FaceRecognition:
         self.faces_dir = faces_dir
         self.video_source = video_source
         self.stop_recognition = False
-        self.recognized_students = []  
+        self.recognized_students = []  # Array to store recognized student names
 
-        self.buttons = [] 
+        self.buttons = []  # Inicializa a lista de botões
 
         self.encode_faces()
 
@@ -72,6 +73,7 @@ class FaceRecognition:
         self.enable_buttons()
 
     def run_recognition(self):
+        self.recognized_students = []
         self.disable_buttons()
         self.show_timed_popup("Reconhecimento", "Iniciando o reconhecimento facial. Por favor, aguarde...")
         video_capture = cv2.VideoCapture(self.video_source)
@@ -103,6 +105,7 @@ class FaceRecognition:
                         name = self.known_face_names[best_match_index]
                         confidence = face_confidence(face_distances[best_match_index])
                         
+                        # Add the recognized name to the recognized_students array if not already present
                         if name not in self.recognized_students:
                             self.recognized_students.append(name)
 
@@ -129,10 +132,15 @@ class FaceRecognition:
         cv2.destroyWindow('Face Recognition')
         self.enable_buttons()
 
+        # Print the recognized students
         print("Recognized students:", self.recognized_students)
 
+        # Especificar o caminho do arquivo de banco de dados SQLite
         db_file = "recognition_log.db"
+
+        # Chamar a função para armazenar os dados de reconhecimento no banco de dados
         recognize_students(db_file, self.recognized_students)
+
     def show_timed_popup(self, title, message, duration=2000):
         def show():
             popup = tk.Toplevel(self.root)
@@ -158,22 +166,38 @@ class FaceRecognition:
     def create_main_buttons(self):
         from main import start_recognition
 
-        canvas = tk.Canvas(self.root, height=300, width=400)
+        canvas = tk.Canvas(self.root, height=600, width=400, bg='#cccccc')
         canvas.pack()
 
-        frame = tk.Frame(self.root, bg='white')
+        frame = tk.Frame(self.root, bg='#cccccc')
         frame.place(relwidth=1, relheight=1)
+
+        # Add the image at the top
+        image = tk.PhotoImage(file="unifil.png")
+        image_label = tk.Label(frame, image=image, bg='#cccccc')
+        image_label.image = image  # Keep a reference to avoid garbage collection
+        image_label.pack(side=tk.TOP, pady=20)
 
         self.buttons = []
 
-        register_button = tk.Button(frame, text="Cadastrar Pessoa", padx=10, pady=5, fg="white", bg="#263D42", font=("Helvetica", 12, "bold"), command=lambda: register_person(self.root))
-        register_button.pack(side=tk.LEFT, expand=True, padx=20, pady=20)
+        register_button = tk.Button(frame, text="Cadastrar Pessoa", padx=20, pady=10, fg="white", bg="#d9873e", font=("Helvetica", 16, "bold"), width=20, command=lambda: register_person(self.root))
+        register_button.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
         self.buttons.append(register_button)
 
-        recognize_button = tk.Button(frame, text="Iniciar Reconhecimento", padx=10, pady=5, fg="white", bg="#263D42", font=("Helvetica", 12, "bold"), command=lambda: threading.Thread(target=self.run_recognition).start())
-        recognize_button.pack(side=tk.RIGHT, expand=True, padx=20, pady=20)
+        recognize_button = tk.Button(frame, text="Iniciar Reconhecimento", padx=20, pady=10, fg="white", bg="#d9873e", font=("Helvetica", 16, "bold"), width=20, command=lambda: threading.Thread(target=self.run_recognition).start())
+        recognize_button.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
         self.buttons.append(recognize_button)
 
-        train_button = tk.Button(frame, text="Treinar Modelo", padx=10, pady=5, fg="white", bg="#263D42", font=("Helvetica", 12, "bold"), command=lambda: threading.Thread(target=self.encode_faces).start())
-        train_button.pack(side=tk.BOTTOM, expand=True, padx=20, pady=20)
+        # Botão para Treinar o Modelo
+        train_button = tk.Button(frame, text="Treinar Modelo", padx=20, pady=10, fg="white", bg="#d9873e", font=("Helvetica", 16, "bold"), width=20, command=lambda: threading.Thread(target=self.encode_faces).start())
+        train_button.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
         self.buttons.append(train_button)
+
+# Código principal para inicializar a interface Tkinter
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("Reconhecimento Facial")
+    root.geometry("800x600")
+    root.configure(bg='#cccccc')
+    app = FaceRecognition(root)
+    root.mainloop()
