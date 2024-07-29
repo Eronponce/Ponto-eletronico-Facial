@@ -7,9 +7,9 @@ import time
 import tkinter as tk
 from tkinter import messagebox
 import threading
-import os  # Adicionado para resolver o erro
+import os
 from register_person import register_person
-from database import recognize_students  # Importa a função para conectar ao banco de dados
+from database import recognize_students
 
 # Helper function to calculate face confidence
 def face_confidence(face_distance, face_match_threshold=0.6):
@@ -35,6 +35,9 @@ class FaceRecognition:
         self.video_source = video_source
         self.stop_recognition = False
         self.recognized_students = []  # Array to store recognized student names
+
+        # Initialize a dictionary to track the identification time for each face
+        self.identification_times = {}
 
         self.buttons = []  # Inicializa a lista de botões
 
@@ -73,7 +76,6 @@ class FaceRecognition:
         self.enable_buttons()
 
     def run_recognition(self):
-        self.recognized_students = []
         self.disable_buttons()
         self.show_timed_popup("Reconhecimento", "Iniciando o reconhecimento facial. Por favor, aguarde...")
         video_capture = cv2.VideoCapture(self.video_source)
@@ -104,10 +106,23 @@ class FaceRecognition:
                     if matches[best_match_index]:
                         name = self.known_face_names[best_match_index]
                         confidence = face_confidence(face_distances[best_match_index])
-                        
-                        # Add the recognized name to the recognized_students array if not already present
-                        if name not in self.recognized_students:
-                            self.recognized_students.append(name)
+
+                        # Add or update the identification time for this face
+                        if name in self.identification_times:
+                            self.identification_times[name]['count'] += 1
+                        else:
+                            self.identification_times[name] = {'count': 1, 'time': time.time()}
+
+                        # Check if the face has been identified for at least 3 seconds (30 frames if processing every frame)
+                        if self.identification_times[name]['count'] >= 10:
+                            # Add the recognized name to the recognized_students array if not already present
+                            if name not in self.recognized_students:
+                                self.recognized_students.append(name)
+                                self.identification_times[name]['count'] = 0  # Reset the count after recognizing
+                                self.show_recognition_info(name)
+                    else:
+                        if name in self.identification_times:
+                            del self.identification_times[name]
 
                     self.face_names.append(f'{name} ({confidence})')
 
@@ -140,6 +155,16 @@ class FaceRecognition:
 
         # Chamar a função para armazenar os dados de reconhecimento no banco de dados
         recognize_students(db_file, self.recognized_students)
+
+    def show_recognition_info(self, name):
+        current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        info_text = f"Recognized: {name}\nTime: {current_time}"
+        
+        info_label = tk.Label(self.root, text=info_text, bg='#d9873e', fg='white', font=("Helvetica", 16, "bold"))
+        info_label.pack(side=tk.TOP, pady=10)
+
+        # Remove the label after 5 seconds
+        self.root.after(5000, info_label.destroy)
 
     def show_timed_popup(self, title, message, duration=2000):
         def show():
