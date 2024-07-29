@@ -83,6 +83,8 @@ class FaceRecognition:
             sys.exit('Video source not found...')
 
         start_time = time.time()
+        recognized_in_this_run = False  # Track if anyone was recognized in this run
+
         while True:
             ret, frame = video_capture.read()
             if not ret:
@@ -113,13 +115,14 @@ class FaceRecognition:
                         else:
                             self.identification_times[name] = {'count': 1, 'time': time.time()}
 
-                        # Check if the face has been identified for at least 3 seconds (30 frames if processing every frame)
-                        if self.identification_times[name]['count'] >= 10:
+                        # Check if the face has been identified for at least 3 seconds (90 frames if processing every frame)
+                        if self.identification_times[name]['count'] >= 90:
                             # Add the recognized name to the recognized_students array if not already present
                             if name not in self.recognized_students:
                                 self.recognized_students.append(name)
                                 self.identification_times[name]['count'] = 0  # Reset the count after recognizing
                                 self.show_recognition_info(name)
+                                recognized_in_this_run = True
                     else:
                         if name in self.identification_times:
                             del self.identification_times[name]
@@ -147,8 +150,11 @@ class FaceRecognition:
         cv2.destroyWindow('Face Recognition')
         self.enable_buttons()
 
+        if not recognized_in_this_run:
+            self.show_recognition_info("Ninguém reconhecido")
+
         # Print the recognized students
-        print("Recognized students:", self.recognized_students)
+        print("Reconhecido:", self.recognized_students)
 
         # Especificar o caminho do arquivo de banco de dados SQLite
         db_file = "recognition_log.db"
@@ -158,7 +164,10 @@ class FaceRecognition:
 
     def show_recognition_info(self, name):
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        info_text = f"Recognized: {name}\nTime: {current_time}"
+        if(name != "Ninguém reconhecido"):
+            info_text = f"Reconhecido: {name}\nTime: {current_time}"
+        else:
+            info_text = f"{name}\nTime: {current_time}"
         
         info_label = tk.Label(self.root, text=info_text, bg='#d9873e', fg='white', font=("Helvetica", 16, "bold"))
         info_label.pack(side=tk.TOP, pady=10)
