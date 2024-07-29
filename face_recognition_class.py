@@ -121,7 +121,6 @@ class FaceRecognition:
                             if name not in self.recognized_students:
                                 self.recognized_students.append(name)
                                 self.identification_times[name]['count'] = 0  # Reset the count after recognizing
-                                self.show_recognition_info(name)
                                 recognized_in_this_run = True
                     else:
                         if name in self.identification_times:
@@ -150,11 +149,21 @@ class FaceRecognition:
         cv2.destroyWindow('Face Recognition')
         self.enable_buttons()
 
-        if not recognized_in_this_run:
-            self.show_recognition_info("Ninguém reconhecido")
+       
+        current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        if(self.recognized_students != []):
+            info_text = f"Reconhecido: {self.recognized_students}\nTime: {current_time}"
+        else:
+            info_text = f"Ninguém reconhecido\nTime: {current_time}"
+        
+        info_label = tk.Label(self.root, text=info_text, bg='#d9873e', fg='white', font=("Helvetica", 16, "bold"))
+        info_label.pack(side=tk.TOP, pady=10)
 
+        # Remove the label after 5 seconds
+        self.root.after(5000, info_label.destroy)
         # Print the recognized students
         print("Reconhecido:", self.recognized_students)
+        
 
         # Especificar o caminho do arquivo de banco de dados SQLite
         db_file = "recognition_log.db"
@@ -162,18 +171,7 @@ class FaceRecognition:
         # Chamar a função para armazenar os dados de reconhecimento no banco de dados
         recognize_students(db_file, self.recognized_students)
 
-    def show_recognition_info(self, name):
-        current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        if(name != "Ninguém reconhecido"):
-            info_text = f"Reconhecido: {name}\nTime: {current_time}"
-        else:
-            info_text = f"{name}\nTime: {current_time}"
-        
-        info_label = tk.Label(self.root, text=info_text, bg='#d9873e', fg='white', font=("Helvetica", 16, "bold"))
-        info_label.pack(side=tk.TOP, pady=10)
-
-        # Remove the label after 5 seconds
-        self.root.after(5000, info_label.destroy)
+     
 
     def show_timed_popup(self, title, message, duration=2000):
         def show():
