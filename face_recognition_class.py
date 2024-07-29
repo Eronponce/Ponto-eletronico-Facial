@@ -116,7 +116,7 @@ class FaceRecognition:
                             self.identification_times[name] = {'count': 1, 'time': time.time()}
 
                         # Check if the face has been identified for at least 3 seconds (90 frames if processing every frame)
-                        if self.identification_times[name]['count'] >= 90:
+                        if self.identification_times[name]['count'] >= 10:
                             # Add the recognized name to the recognized_students array if not already present
                             if name not in self.recognized_students:
                                 self.recognized_students.append(name)
