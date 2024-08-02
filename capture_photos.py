@@ -39,6 +39,7 @@ def capture_photos(person_dir, root):
 
     def show_frame():
         ret, frame = cap.read()
+        frame = cv2.flip(frame, 1)
         if ret:
             cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             img = Image.fromarray(cv2image)

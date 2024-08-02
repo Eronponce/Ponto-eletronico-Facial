@@ -90,7 +90,7 @@ class FaceRecognition:
             if not ret:
                 print("Failed to capture image")
                 break
-
+            frame = cv2.flip(frame, 1)
             if self.process_current_frame:
                 small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
                 rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
@@ -196,19 +196,27 @@ class FaceRecognition:
         self.create_main_buttons()
 
     def create_main_buttons(self):
-        from main import start_recognition
-
         canvas = tk.Canvas(self.root, height=600, width=400, bg='#cccccc')
         canvas.pack()
 
         frame = tk.Frame(self.root, bg='#cccccc')
         frame.place(relwidth=1, relheight=1)
 
-        # Add the image at the top
+        # Adicionar a imagem no topo
         image = tk.PhotoImage(file="unifil.png")
         image_label = tk.Label(frame, image=image, bg='#cccccc')
-        image_label.image = image  # Keep a reference to avoid garbage collection
+        image_label.image = image  # Manter referência para evitar coleta de lixo
         image_label.pack(side=tk.TOP, pady=20)
+
+        # Adicionar texto de instruções
+        instructions = (
+            "Instruções de cadastro:\n"
+            "1. Caso não tenha se cadastrado, clique em Cadastre-se\n"
+            "2. Treine o modelo para que sua face seja reconhecida\n"
+            "3. Clique em Reconhecimento Facial e fique pelo menos 3 segundos na tela"
+        )
+        instructions_label = tk.Label(frame, text=instructions, justify="left", bg='#cccccc', font=("Helvetica", 12))
+        instructions_label.pack(side=tk.TOP, pady=10)
 
         self.buttons = []
 
@@ -216,14 +224,16 @@ class FaceRecognition:
         register_button.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
         self.buttons.append(register_button)
 
-        recognize_button = tk.Button(frame, text="Iniciar Reconhecimento", padx=20, pady=10, fg="white", bg="#d9873e", font=("Helvetica", 16, "bold"), width=20, command=lambda: threading.Thread(target=self.run_recognition).start())
-        recognize_button.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
-        self.buttons.append(recognize_button)
-
         # Botão para Treinar o Modelo
         train_button = tk.Button(frame, text="Treinar Modelo", padx=20, pady=10, fg="white", bg="#d9873e", font=("Helvetica", 16, "bold"), width=20, command=lambda: threading.Thread(target=self.encode_faces).start())
         train_button.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
         self.buttons.append(train_button)
+
+        recognize_button = tk.Button(frame, text="Iniciar Reconhecimento", padx=20, pady=10, fg="white", bg="#d9873e", font=("Helvetica", 16, "bold"), width=20, command=lambda: threading.Thread(target=self.run_recognition).start())
+        recognize_button.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
+        self.buttons.append(recognize_button)
+
+       
 
 # Código principal para inicializar a interface Tkinter
 if __name__ == "__main__":
