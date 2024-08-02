@@ -81,7 +81,7 @@ class FaceRecognition:
         video_capture = cv2.VideoCapture(self.video_source)
         if not video_capture.isOpened():
             sys.exit('Video source not found...')
-
+        self.recognized_students = []
         start_time = time.time()
         recognized_in_this_run = False  # Track if anyone was recognized in this run
 
@@ -96,7 +96,7 @@ class FaceRecognition:
                 rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
                 self.face_locations = face_recognition.face_locations(rgb_small_frame)
                 self.face_encodings = face_recognition.face_encodings(rgb_small_frame, self.face_locations)
-
+                
                 self.face_names = []
                 for face_encoding in self.face_encodings:
                     matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
