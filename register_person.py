@@ -1,7 +1,9 @@
-import os
-import re
 import tkinter as tk
 from tkinter import simpledialog
+from tkinter import messagebox
+from tkinter import ttk
+import os
+import re
 from capture_photos import capture_photos
 from unidecode import unidecode
 import sqlite3
@@ -37,30 +39,52 @@ def save_to_database(real_name, sanitized_name, course, registration, phone, ema
     conn.close()
 
 def register_person(root):
-    real_name = simpledialog.askstring("Input", "Qual é o nome completo da pessoa?", parent=root)
-    if not real_name:
-        return
-    course = simpledialog.askstring("Input", "Qual é o curso da pessoa?", parent=root)
-    if not course:
-        return
-    registration = simpledialog.askstring("Input", "Qual é a matrícula da pessoa?", parent=root)
-    if not registration:
-        return
-    phone = simpledialog.askstring("Input", "Qual é o celular da pessoa?", parent=root)
-    if not phone:
-        return
-    email = simpledialog.askstring("Input", "Qual é o email da pessoa?", parent=root)
-    if not email:
-        return
+    def on_submit():
+        real_name = entry_name.get()
+        course = entry_course.get()
+        registration = entry_registration.get()
+        phone = entry_phone.get()
+        email = entry_email.get()
 
-    sanitized_name = sanitize_folder_name(real_name)
-    person_dir = os.path.join('faces', sanitized_name)
-    os.makedirs(person_dir, exist_ok=True)
+        if not real_name or not course or not registration or not phone or not email:
+            messagebox.showerror("Erro", "Todos os campos são obrigatórios")
+            return
 
-    save_to_database(real_name, sanitized_name, course, registration, phone, email)
+        sanitized_name = sanitize_folder_name(real_name)
+        person_dir = os.path.join('faces', sanitized_name)
+        os.makedirs(person_dir, exist_ok=True)
 
-    capture_photos(person_dir, root)
+        save_to_database(real_name, sanitized_name, course, registration, phone, email)
+        capture_photos(person_dir, root)
 
+        form_window.destroy()
+
+    form_window = tk.Toplevel(root)
+    form_window.title("Cadastro de Pessoa")
+    form_window.geometry("400x300")  # Aumenta o tamanho da janela
+
+    tk.Label(form_window, text="Nome Completo:").grid(row=0, column=0, padx=20, pady=10)
+    entry_name = tk.Entry(form_window, width=30)  # Aumenta a largura do campo de entrada
+    entry_name.grid(row=0, column=1, padx=20, pady=10)
+
+    tk.Label(form_window, text="Curso:").grid(row=1, column=0, padx=20, pady=10)
+    entry_course = tk.Entry(form_window, width=30)
+    entry_course.grid(row=1, column=1, padx=20, pady=10)
+
+    tk.Label(form_window, text="Matrícula:").grid(row=2, column=0, padx=20, pady=10)
+    entry_registration = tk.Entry(form_window, width=30)
+    entry_registration.grid(row=2, column=1, padx=20, pady=10)
+
+    tk.Label(form_window, text="Celular:").grid(row=3, column=0, padx=20, pady=10)
+    entry_phone = tk.Entry(form_window, width=30)
+    entry_phone.grid(row=3, column=1, padx=20, pady=10)
+
+    tk.Label(form_window, text="Email:").grid(row=4, column=0, padx=20, pady=10)
+    entry_email = tk.Entry(form_window, width=30)
+    entry_email.grid(row=4, column=1, padx=20, pady=10)
+
+    submit_button = tk.Button(form_window, text="OK", command=on_submit)
+    submit_button.grid(row=5, columnspan=2, pady=20)
 # Exemplo de uso
 if __name__ == "__main__":
     root = tk.Tk()

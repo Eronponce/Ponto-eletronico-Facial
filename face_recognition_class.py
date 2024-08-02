@@ -160,7 +160,7 @@ class FaceRecognition:
         info_label.pack(side=tk.TOP, pady=10)
 
         # Remove the label after 5 seconds
-        self.root.after(5000, info_label.destroy)
+        self.root.after(10000, info_label.destroy)
         # Print the recognized students
         print("Reconhecido:", self.recognized_students)
         
@@ -211,13 +211,13 @@ class FaceRecognition:
         # Adicionar texto de instruções
         instructions = (
             "Instruções de cadastro:\n"
-            "1. Caso não tenha se cadastrado, clique em Cadastre-se\n"
+            "1. Caso não tenha se cadastrado, clique em 'Cadastrar Pessoa'\n"
             "2. Treine o modelo para que sua face seja reconhecida\n"
-            "3. Clique em Reconhecimento Facial e fique pelo menos 3 segundos na tela"
+            "3. Clique em 'Iniciar Reconhecimento' e fique pelo menos 3 segundos na tela"
         )
         instructions_label = tk.Label(frame, text=instructions, justify="left", bg='#cccccc', font=("Helvetica", 12))
         instructions_label.pack(side=tk.TOP, pady=10)
-
+        
         self.buttons = []
 
         register_button = tk.Button(frame, text="Cadastrar Pessoa", padx=20, pady=10, fg="white", bg="#d9873e", font=("Helvetica", 16, "bold"), width=20, command=lambda: register_person(self.root))
